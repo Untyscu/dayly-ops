@@ -1,36 +1,77 @@
-version: '3'
+---
+
 services:
   php:
+    container_name: php
+    image: app-php
     build: 
       context: .
       dockerfile: backend.dockerfile
-    container_name: php
-    volumes:
-      - ./app:/var/www/html
+    restart: always
+    environment:
+      WORDPRESS_DB_NAME: /run/secrets/db_name
+      WORDPRESS_DB_USER: /run/secrets/db_user
+      WORDPRESS_DB_PASSWORD: /run/secrets/db_password
+      WORDPRESS_DB_HOST: /run/secrets/db_host
+      WORDPRESS_AUTH_KEY: /run/secrets/auth_key
+      WORDPRESS_NONCE_KEY: /run/secrets/nonce_key
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+      - db_host
+      - auth_key
+      - nonce_key
     ports:
       - 8080:80
     depends_on:
-      - mysql
+      - wp_mysql
     networks:
-      - bridge
+      - app-network
+    deploy:
+      mode: replicated
+      replicas: 1
+
   mysql:
     container_name: mysql
-    image: clickhouse/clickhouse-server:23.1.2.9-alpine
+    image: mariadb:latest
+    restart: always
     environment:
-      - CLICKHOUSE_USER:default
-      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT:1
-      - CLICKHOUSE_PASSWORD:default
+      MARIADB_USER: /run/secrets/db_user
+      MARIADB_PASSWORD: /run/secrets/db_password
+      MARIADB_DATABASE: /run/secrets/db_name
+      MARIADB_ROOT_PASSWORD: /run/secrets/db_root_password
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+      - db_root_password
     volumes:
-      - ./clickhouse-persistence:/bitnami/clickhouse
+      - ./backup-mariadb:/backup
+      - ./mariadb:/var/lib/mysql:Z
     ports:
-      - "8123:8123"
-      - "9000:9000"
-      - "9004:9004"
-      - "9005:9005"
-      - "9009:9009"
+      - "3306:3306"
     networks:
-      - bridge
+      - app-network
+    deploy:
+      mode: replicated
+      replicas: 1
+
+secrets:
+  db_name:
+    external: true
+  db_user:
+    external: true
+  db_password:
+    external: true
+  db_root_password:
+    external: true
+  db_host:
+    external: true
+  auth_key:
+    external: true
+  nonce_key:
+    external: true
     
 networks:
-  bridge:
-    driver: bridge
+  app-network:

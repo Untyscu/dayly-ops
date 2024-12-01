@@ -1,0 +1,5 @@
+wordpress/*
+mariadb/*
+# !wordpress/
+!mariadb/
+!wordpress/wp-config.php
