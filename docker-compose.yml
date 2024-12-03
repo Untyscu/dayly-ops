@@ -1,76 +1,38 @@
 ---
 
 services:
-  php:
-    container_name: php
+  wp_php:
+    container_name: wp_php
     image: app-php
     build: 
       context: .
       dockerfile: backend.dockerfile
-    restart: always
-    environment:
-      WORDPRESS_DB_NAME: /run/secrets/db_name
-      WORDPRESS_DB_USER: /run/secrets/db_user
-      WORDPRESS_DB_PASSWORD: /run/secrets/db_password
-      WORDPRESS_DB_HOST: /run/secrets/db_host
-      WORDPRESS_AUTH_KEY: /run/secrets/auth_key
-      WORDPRESS_NONCE_KEY: /run/secrets/nonce_key
-    secrets:
-      - db_name
-      - db_user
-      - db_password
-      - db_host
-      - auth_key
-      - nonce_key
+    volumes:
+      - ./wp-conf/simple-wp-config.php:/var/www/html/wp-config.php
+      - ./themes:/var/www/html/wp-content/themes
+      - ./plugins:/var/www/html/wp-content/plugins
+    restart: unless-stopped
     ports:
       - 8080:80
     depends_on:
       - wp_mysql
     networks:
       - app-network
-    deploy:
-      mode: replicated
-      replicas: 1
 
-  mysql:
-    container_name: mysql
+  wp_mysql:
+    container_name: wp_mysql
     image: mariadb:latest
-    restart: always
+    restart: unless-stopped
     environment:
-      MARIADB_USER: /run/secrets/db_user
-      MARIADB_PASSWORD: /run/secrets/db_password
-      MARIADB_DATABASE: /run/secrets/db_name
-      MARIADB_ROOT_PASSWORD: /run/secrets/db_root_password
-    secrets:
-      - db_name
-      - db_user
-      - db_password
-      - db_root_password
+      MARIADB_USER: default
+      MARIADB_PASSWORD: default
+      MARIADB_DATABASE: wordpress
+      MARIADB_ROOT_PASSWORD: default
     volumes:
       - ./mariadb:/var/lib/mysql:Z
-    ports:
-      - "3306:3306"
     networks:
       - app-network
-    deploy:
-      mode: replicated
-      replicas: 1
-
-secrets:
-  db_name:
-    external: true
-  db_user:
-    external: true
-  db_password:
-    external: true
-  db_root_password:
-    external: true
-  db_host:
-    external: true
-  auth_key:
-    external: true
-  nonce_key:
-    external: true
     
 networks:
   app-network:
+    driver: bridge
