@@ -47,7 +47,6 @@ services:
       - db_password
       - db_root_password
     volumes:
-      - ./backup-mariadb:/backup
       - ./mariadb:/var/lib/mysql:Z
     ports:
       - "3306:3306"
