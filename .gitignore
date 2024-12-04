@@ -1,0 +1,9 @@
+wordpress/*
+mariadb/*
+# !wordpress/
+!mariadb
+!wordpress/wp-config.php
+plugins/*
+!plugins/index.php
+themes/*
+!themes/index.php
